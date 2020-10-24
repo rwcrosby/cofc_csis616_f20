@@ -12,15 +12,10 @@ use std::fmt;
 use crate::dfa;
 
 // *********************************************************************
-/// Helper type alias to simplify references to a state
+/// Helper type to simplify references to a state
 /// 
 /// - The `RefCell` allows interior mutability for the state
-///
-///     This allows us to change the contents of the `_State` instance.
-/// 
-/// - The `Rc` adds reference counting aowing multiple references to the state.
-///
-///     This is required so that we can clone the references
+/// - The `Rc` adds reference counting aowing multiple references to the state
 type StateRef<'a> = Rc<RefCell<_State<'a>>>;
 
 // *********************************************************************
@@ -39,10 +34,7 @@ struct _State<'a> {
 // *********************************************************************
 /// Public representation of a state node
 /// 
-/// A tuple structure containing the reference to the actual _State
-///
-/// This allows us to tack implementation methods on the state since
-/// we can't add implementations to a type alias.
+/// An tuple structure containing the reference to the actual _State
 pub struct State<'a>(StateRef<'a>);
 
 // *********************************************************************
@@ -122,6 +114,31 @@ impl<'a> Graph<'a> {
               start_state: states[dfa.start-1].0.clone(), 
               states: states}
 
+    }
+
+    /// Execute the graph on a sentence
+    /// Return Ok and a bool indicating accept (true) or reject (false)
+    /// Return Err if a character not in the alphabet is encountered
+    pub fn execute(&self, sentence: &str) -> Result<bool, String> {
+
+        let mut state: StateRef<'a> = self.start_state.clone();
+        let mut accept: bool = state.borrow().accept;
+
+        for ch in sentence.chars() {
+
+            let new_state = match state.borrow().adjacent.get(&ch) {
+                Some(s) => s,
+                _ => return Err(format!("Character <{}> not in alphabet", ch))
+            }.clone();
+
+            println!("δ({}, {}) → ({})", state.borrow().name, ch, new_state.borrow().name);
+
+            state = new_state;
+            accept = state.borrow().accept;
+
+        }
+
+        Ok(accept)
     }
 
 }

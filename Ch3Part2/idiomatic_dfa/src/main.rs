@@ -23,6 +23,8 @@
 //! To `stderr`: Debug display of the internal graph structure
 //! 
 //! To `stdout`: Graphviz definitions of the graph structure
+use std::io;
+use std::io::prelude::*;
 use std::io::Write;
 
 mod dfa;
@@ -49,6 +51,27 @@ fn main() {
 
     // Write the Graphviz version of the graph to stdout
     println!{"{}", graph};
+
+    // Imbedded function to process a sentence
+    fn _process_sentence(graph: &graph::Graph, 
+                         r: Result<String, io::Error>) {
+        let sentence = r.unwrap();
+        println!("Processing sentence <{}>", sentence);
+
+        match graph.execute(&sentence) {
+            Ok(b) => println!("Sentence {} in the language", 
+                              if b {"is"} else {"is not"}),
+            Err(s) => println!("Error processing sentence: {}", s)
+        }
+
+    }
+
+    // Process input lines as sentences in the language
+
+    io::stdin()
+        .lock()
+        .lines()
+        .for_each(|l| _process_sentence(&graph, l));
 
 }
 
